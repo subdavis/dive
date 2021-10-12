@@ -1,3 +1,5 @@
+from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, Field, validator
@@ -140,13 +142,6 @@ class PrivateQueueEnabledResponse(BaseModel):
     token: Optional[dict]
 
 
-class CocoMetadata(BaseModel):
-    categories: Dict[int, dict]
-    keypoint_categories: Dict[int, dict]
-    images: Dict[int, dict]
-    videos: Dict[int, dict]
-
-
 class BrandData(BaseModel):
     vuetify: Optional[dict]
     favicon: Optional[str]
@@ -157,6 +152,46 @@ class BrandData(BaseModel):
 
     class Config:
         extra = 'forbid'
+
+
+class FileType(int, Enum):
+    DIVE_JSON = 1
+    VIAME_CSV = 2
+    COCO_JSON = 3
+    DIVE_CONF = 4
+
+
+class GeneralImage(BaseModel):
+    """
+    GeneralImage is all the properties we may learn about an image
+    from any supported annotation format.
+
+    Definition from https://pypi.org/project/kwcoco/
+    """
+
+    id: str  # arbitrary unique id
+    name: Optional[str]  # an encouraged but optional unique name
+
+    width: Optional[int]  # In pixels
+    height: Optional[int]  # in pixels
+    file_name: Optional[int]
+    coco_url: Optional[int]
+    date_captured: Optional[datetime]
+    timestamp: Optional[Union[str, int]]  # a iso-string timestamp or an integer in flicks.
+    frame_index: Optional[int]  # The images index in the dataset
+    video_id: Optional[str]
+
+
+class GeneralFileLoad(BaseModel):
+    """
+    GeneralFileLoad is all the properties we may learn from
+    any supported annotation, metadata, or configuration file import.
+    """
+
+    datatype: FileType
+    data: Optional[Dict[str, dict]]  # The un-validated annotation data
+    configuration: Optional[MetadataMutable]  # Any accompanying configuration
+    images: Optional[Dict[int, GeneralImage]]  # Any information about images
 
 
 # interpolate all features [a, b)

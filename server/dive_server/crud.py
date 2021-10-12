@@ -1,12 +1,11 @@
 """General CRUD operations and utilities shared among views"""
 from datetime import datetime
-from enum import Enum
 import functools
 import io
 import json
 import os
 from pathlib import Path
-from typing import Callable, Dict, Generator, List, Optional, Tuple, Type, TypedDict
+from typing import Callable, Dict, Generator, List, Optional, Tuple, Type
 
 from girder.constants import AccessType
 from girder.exceptions import RestException, ValidationException
@@ -22,13 +21,6 @@ from pymongo.cursor import Cursor
 from dive_utils import asbool, constants, fromMeta, models, strNumericCompare
 from dive_utils.serializers import kwcoco, viame
 from dive_utils.types import GirderModel, GirderUserModel
-
-
-class FileType(Enum):
-    DIVE_JSON = 1
-    VIAME_CSV = 2
-    COCO_JSON = 3
-    DIVE_CONF = 4
 
 
 def get_validated_model(model: BaseModel, **kwargs):
@@ -113,13 +105,6 @@ def move_existing_result_to_auxiliary_folder(folder, user):
 
 def itemIsWebsafeVideo(item: Item) -> bool:
     return fromMeta(item, "codec") == "h264"
-
-
-class LoadedFile(TypedDict):
-    datatype: FileType
-    data: Optional[Dict[str, dict]]
-    configuration: Optional[dict]
-    images: Optional[Dict[int, dict]]
 
 
 def get_data_by_type(
@@ -261,17 +246,8 @@ def getCloneRoot(owner: GirderModel, source_folder: GirderModel):
     return source_folder
 
 
-def valid_images(
-    folder: GirderModel,
-    user: GirderUserModel,
-) -> List[GirderModel]:
-    """
-    Any time images are used where frame alignment matters, this function must be used
-    """
-    images = Folder().childItems(
-        getCloneRoot(user, folder),
-        filters={"lowerName": {"$regex": constants.safeImageRegex}},
-    )
+def ordered_images(images: List[GirderModel]) -> List[GirderModel]:
+    """given a list of items, get the correctly sorted version"""
 
     def unwrapItem(item1, item2):
         return strNumericCompare(item1['name'], item2['name'])
@@ -280,6 +256,15 @@ def valid_images(
         images,
         key=functools.cmp_to_key(unwrapItem),
     )
+
+
+def valid_images(folder: GirderModel, user: GirderUserModel) -> List[GirderModel]:
+    """Any time images are used where frame alignment matters, this function must be used"""
+    images = Folder().childItems(
+        getCloneRoot(user, folder),
+        filters={"lowerName": {"$regex": constants.safeImageRegex}},
+    )
+    return ordered_images(images)
 
 
 def get_annotation_csv_generator(

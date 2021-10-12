@@ -1,27 +1,37 @@
 """
 KWCOCO JSON format deserializer
 """
+from datetime import datetime
 import functools
-from typing import Any, Dict, List, Tuple
+from typing import Any, ByteString, Dict, Iterable, List, Optional, Tuple
+
+from pydantic.main import BaseModel
 
 from dive_utils import strNumericCompare
-from dive_utils.models import CocoMetadata, Feature, Track
+from dive_utils.models import Feature, GeneralImage, Track
 
-from . import viame
+from . import BaseParser, viame
 
 
-def is_coco_json(coco: Dict[str, Any]):
+class CocoMetadata(BaseModel):
+    categories: Dict[int, dict]
+    keypoint_categories: Dict[int, dict]
+    images: Dict[int, GeneralImage]
+    videos: Dict[int, dict]
+
+
+def _is_coco_json(coco: Dict[str, Any]):
     # Required COCO fields according to https://cocodataset.org/#format-data
     keys = ['info', 'images', 'annotations', 'licenses', 'categories']
     return all(key in coco for key in keys)
 
 
-def annotation_info(annotation: dict, meta: CocoMetadata) -> Tuple[int, str, int, List[int]]:
+def _annotation_info(annotation: dict, meta: CocoMetadata) -> Tuple[int, str, int, List[int]]:
     # these fields will always exist
     annotation_id = annotation['id']
     image_id = annotation['image_id']
-    filename = meta.images[image_id]['file_name']
-    frame = meta.images[image_id]['frame_index']
+    filename = meta.images[image_id].file_name
+    frame = meta.images[image_id].frame_index
 
     # track ID may not exist so use annotation ID as replacement
     # track ID may be of type int, string, UUID
@@ -124,7 +134,7 @@ def _parse_annotation_for_tracks(
         track_attributes,
         confidence_pairs,
     ) = _parse_annotation(annotation, meta)
-    trackId, filename, frame, bounds = annotation_info(annotation, meta)
+    trackId, filename, frame, bounds = _annotation_info(annotation, meta)
 
     feature = Feature(
         frame=frame,
@@ -138,7 +148,7 @@ def _parse_annotation_for_tracks(
     return feature, attributes, track_attributes, confidence_pairs
 
 
-def load_coco_metadata(coco: Dict[str, List[dict]]) -> CocoMetadata:
+def _load_coco_metadata(coco: Dict[str, List[dict]]) -> CocoMetadata:
     categories = coco.get('categories', [])
     keypoint_categories = coco.get('keypoint_categories', [])
     images = coco.get('images', [])
@@ -170,7 +180,7 @@ def load_coco_metadata(coco: Dict[str, List[dict]]) -> CocoMetadata:
 
     categories_map = {x['id']: x for x in categories}
     keypoint_categories_map = {x['id']: x for x in keypoint_categories}
-    images_map = {x['id']: x for x in dive_sorted_images}
+    images_map = {x['id']: GeneralImage(**x) for x in dive_sorted_images}
     videos_map = {x['id']: x for x in videos}
 
     return CocoMetadata(
@@ -181,14 +191,14 @@ def load_coco_metadata(coco: Dict[str, List[dict]]) -> CocoMetadata:
     )
 
 
-def load_coco_as_tracks_and_attributes(coco: Dict[str, List[dict]]) -> Tuple[dict, dict]:
+def _load_coco_as_tracks_and_attributes(coco: Dict[str, List[dict]]) -> Tuple[dict, dict]:
     """
     Convert KWCOCO json to DIVE json tracks.
     """
     tracks: Dict[int, Track] = {}
     metadata_attributes: Dict[str, Dict[str, Any]] = {}
     test_vals: Dict[str, Dict[str, int]] = {}
-    meta = load_coco_metadata(coco)
+    meta = _load_coco_metadata(coco)
     annotations = coco.get('annotations', [])
 
     for annotation in annotations:
@@ -199,7 +209,7 @@ def load_coco_as_tracks_and_attributes(coco: Dict[str, List[dict]]) -> Tuple[dic
             confidence_pairs,
         ) = _parse_annotation_for_tracks(annotation, meta)
 
-        trackId, _, frame, _ = annotation_info(annotation, meta)
+        trackId, _, frame, _ = _annotation_info(annotation, meta)
 
         if trackId not in tracks:
             tracks[trackId] = Track(begin=frame, end=frame, trackId=trackId)
@@ -221,3 +231,8 @@ def load_coco_as_tracks_and_attributes(coco: Dict[str, List[dict]]) -> Tuple[dic
 
     track_json = {trackId: track.dict(exclude_none=True) for trackId, track in tracks.items()}
     return track_json, metadata_attributes
+
+
+class CocoParser(BaseParser):
+    def parse(readers: List[Iterable[ByteString]]):
+        return super().parse(readers)
