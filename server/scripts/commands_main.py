@@ -3,6 +3,7 @@ Cli tools for using parts of the DIVE codebase outside a web server environment
 """
 import functools
 import json
+from pathlib import Path
 from typing import BinaryIO, Dict, List, Optional, TextIO
 
 import click
@@ -19,6 +20,25 @@ def verify_dive_json(input: TextIO):
     for t in trackdicts.values():
         models.Track(**t)
     click.secho('success', fg='green')
+
+
+@cli.command(
+    name='reconstruct',
+    help="assemble a single JSON annotation file from many in a directory",
+)
+@click.argument('folder')
+def reconstruct(folder: str):
+    inpath = Path(folder)
+    files = sorted(inpath.glob('*.json'))
+    reconstructed = {}
+    for file in files:
+        with open(file, 'rb') as bytes:
+            try:
+                data = json.load(bytes)
+                reconstructed.update(data)
+            except:
+                print('Could not parse', file)
+    click.echo(json.dumps(reconstructed))
 
 
 @cli.group(name="convert")

@@ -6,7 +6,7 @@ import io
 import json
 import os
 from pathlib import Path
-from typing import Callable, Dict, Generator, List, Optional, Tuple, Type
+from typing import Callable, Dict, Generator, List, Optional, Tuple, Type, TypedDict
 
 from girder.constants import AccessType
 from girder.exceptions import RestException, ValidationException
@@ -115,9 +115,16 @@ def itemIsWebsafeVideo(item: Item) -> bool:
     return fromMeta(item, "codec") == "h264"
 
 
+class LoadedFile(TypedDict):
+    datatype: FileType
+    data: Optional[Dict[str, dict]]
+    configuration: Optional[dict]
+    images: Optional[Dict[int, dict]]
+
+
 def get_data_by_type(
-    file: Optional[GirderModel], as_type: Optional[FileType] = None
-) -> Tuple[Optional[FileType], dict, dict]:
+    file: Optional[GirderModel], as_type: Optional[FileType]
+) -> Optional[LoadedFile]:
     """
     Given an arbitrary Girder file model, figure out what kind of file it is and
     parse it appropriately.
@@ -125,7 +132,7 @@ def get_data_by_type(
     :as_type: bypass type discovery (potentially expensive) if caller is certain about type
     """
     if file is None:
-        return None, {}, {}
+        return None
     file_string = b"".join(list(File().download(file, headers=False)())).decode()
     data_dict = None
 
@@ -150,7 +157,9 @@ def get_data_by_type(
     # Parse the file as the now known type
     if as_type == FileType.VIAME_CSV:
         tracks, attributes = viame.load_csv_as_tracks_and_attributes(file_string.splitlines())
-        return as_type, tracks, attributes
+        return LoadedFile(
+            datatype=as_type, data=tracks, configuration={"attributes": attributes}, images=None
+        )
 
     # All filetypes below are JSON, so if as_type was specified, it needs to be loaded.
     if data_dict is None:
@@ -158,15 +167,25 @@ def get_data_by_type(
 
     if as_type == FileType.COCO_JSON:
         tracks, attributes = kwcoco.load_coco_as_tracks_and_attributes(data_dict)
-        return as_type, tracks, attributes
-    if as_type == FileType.DIVE_CONF or as_type == FileType.DIVE_JSON:
-        return as_type, data_dict, {}
-    return None, {}, {}
+        return LoadedFile(
+            datatype=as_type, data=tracks, configuration={"attributes": attributes}, images=None
+        )
+    if as_type == FileType.DIVE_JSON:
+        return LoadedFile(datatype=as_type, data=data_dict, configuration=None, images=None)
+    if as_type == FileType.DIVE_CONF:
+        return LoadedFile(datatype=as_type, configuration=data_dict, data=None, images=None)
+    return None
 
 
 def getTrackData(file: Optional[GirderModel]) -> Dict[str, dict]:
     """Wrapper function to get track data if type is already known"""
-    return get_data_by_type(file, as_type=FileType.DIVE_JSON)[1]
+    filedata = get_data_by_type(file, as_type=FileType.DIVE_JSON)
+    if not filedata:
+        raise ValueError('Unexpected missing value')
+    tracks = filedata["data"]
+    if not tracks:
+        raise ValueError('Unexpected missing value')
+    return tracks
 
 
 def saveTracks(folder, tracks, user):
