@@ -3,14 +3,15 @@ KWCOCO JSON format deserializer
 """
 from datetime import datetime
 import functools
+import json
 from typing import Any, ByteString, Dict, Iterable, List, Optional, Tuple
 
 from pydantic.main import BaseModel
 
 from dive_utils import strNumericCompare
-from dive_utils.models import Feature, GeneralImage, Track
+from dive_utils.models import Feature, FileType, GeneralFileLoad, GeneralImage, Track
 
-from . import BaseParser, viame
+from . import BaseParser, WrongDataType, viame
 
 
 class CocoMetadata(BaseModel):
@@ -235,4 +236,12 @@ def _load_coco_as_tracks_and_attributes(coco: Dict[str, List[dict]]) -> Tuple[di
 
 class CocoParser(BaseParser):
     def parse(readers: List[Iterable[ByteString]]):
-        return super().parse(readers)
+        if len(readers) != 1:
+            raise WrongDataType('Expected exactly 1 reader')
+        coco = json.load(readers[0])
+        tracks, attributes = _load_coco_as_tracks_and_attributes(coco)
+        return GeneralFileLoad(
+            datatype=FileType.COCO_JSON,
+            data=tracks,
+            configuration={"attributes": attributes},
+        )
