@@ -384,16 +384,15 @@ export default defineComponent({
       @mouseover="cursorHandler.handleMouseEnter"
     >
       <div class="loadingSpinnerContainer">
-        <v-progress-circular
-          v-if="loadingVideo || loadingImage"
+        <v-progress-linear
           class="loadingSpinner"
           indeterminate
-          size="100"
-          width="15"
+          height="25"
+          width="200"
           color="light-blue"
         >
           Loading
-        </v-progress-circular>
+        </v-progress-linear>
       </div>
     </div>
     <slot

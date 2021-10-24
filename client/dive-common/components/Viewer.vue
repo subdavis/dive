@@ -144,6 +144,7 @@ export default defineComponent({
       sortedTracks,
       intervalTree,
       addTrack,
+      bulkInsert,
       insertTrack,
       removeTrack,
       getNewTrackId,
@@ -344,15 +345,7 @@ export default defineComponent({
         const trackData = await loadDetections(datasetId.value);
         const tracks = Object.values(trackData);
         progress.total = tracks.length;
-        for (let i = 0; i < tracks.length; i += 1) {
-          if (i % 4000 === 0) {
-          /* Every N tracks, yeild some cycles for other scheduled tasks */
-            progress.progress = i;
-            // eslint-disable-next-line no-await-in-loop
-            await new Promise((resolve) => window.setTimeout(resolve, 500));
-          }
-          insertTrack(Track.fromJSON(tracks[i]), { imported: true });
-        }
+        await bulkInsert(tracks, (track, i) => { progress.progress = i; });
         progress.loaded = true;
       } catch (err) {
         progress.loaded = false;
@@ -614,19 +607,20 @@ export default defineComponent({
               {{ loadError }}
             </p>
           </v-alert>
-          <v-progress-circular
+          <v-col
             v-else
-            :indeterminate="progressValue === 0"
-            :value="progressValue"
-            size="100"
-            width="15"
-            color="light-blue"
-            class="main-progress-linear"
-            rotate="-90"
+            cols="8"
           >
-            <span v-if="progressValue === 0">Loading</span>
-            <span v-else>{{ progressValue }}%</span>
-          </v-progress-circular>
+            <v-progress-linear
+              :value="progressValue"
+              color="light-blue"
+              height="25"
+              rounded
+            >
+              <span v-if="progressValue === 0">Fetching Data...</span>
+              <span v-else>{{ progressValue }}%</span>
+            </v-progress-linear>
+          </v-col>
         </div>
       </v-col>
       <SidebarContext />

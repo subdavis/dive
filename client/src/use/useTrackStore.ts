@@ -1,6 +1,6 @@
 import { ref, Ref, computed } from '@vue/composition-api';
 import IntervalTree from '@flatten-js/interval-tree';
-import Track, { TrackId } from '../track';
+import Track, { TrackData, TrackId } from '../track';
 
 interface UseTrackStoreParams {
   markChangesPending: (
@@ -92,9 +92,24 @@ export default function useTrackStore({ markChangesPending }: UseTrackStoreParam
     } else {
       trackIds.value.push(track.trackId);
     }
-    if (!args?.imported) {
-      markChangesPending({ action: 'upsert', track });
+  }
+
+  async function bulkInsert(tracks: TrackData[], progress: (track: Track, index: number) => void) {
+    const newTrackIds: number[] = [];
+    for (let i = 0; i < tracks.length; i += 1) {
+      const track = Track.fromJSON(tracks[i]);
+      track.bus.$on('notify', onChange);
+      trackMap.set(track.trackId, track);
+      intervalTree.insert([track.begin, track.end], track.trackId.toString());
+      newTrackIds.push(track.trackId);
+      if (i % 5000 === 0) {
+        /* Every N tracks, yeild some cycles for other scheduled tasks */
+        progress(track, i);
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => window.setTimeout(resolve, 200));
+      }
     }
+    trackIds.value = trackIds.value.concat(newTrackIds);
   }
 
   function addTrack(frame: number, defaultType: string, afterId?: TrackId): Track {
@@ -163,6 +178,7 @@ export default function useTrackStore({ markChangesPending }: UseTrackStoreParam
     sortedTracks,
     intervalTree,
     addTrack,
+    bulkInsert,
     insertTrack,
     getNewTrackId,
     removeTrack,
