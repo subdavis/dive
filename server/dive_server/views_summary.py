@@ -23,11 +23,9 @@ def generate_max_n_summary_csv(
     writer = csv.writer(csvFile)
     writer.writerow(
         [
-            (
-                '# Max N Counts summary indicates the single frame with'
-                ' the maximum number of detections of a particular type'
-                ' for each type within each dataset'
-            )
+            '# Max N Counts summary indicates the single frame with'
+            ' the maximum number of detections of a particular type'
+            ' for each type within each dataset'
         ]
     )
     writer.writerow(

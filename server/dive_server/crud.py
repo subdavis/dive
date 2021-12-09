@@ -90,8 +90,7 @@ def get_static_pipelines_path() -> Path:
     env_pipelines_path = os.getenv("VIAME_PIPELINES_PATH")
     if env_pipelines_path is None:
         raise Exception(
-            "No pipeline path specified. "
-            "Please set the VIAME_PIPELINES_PATH environment variable.",
+            "No pipeline path specified. Please set the VIAME_PIPELINES_PATH environment variable.",
         )
 
     pipeline_path = Path(env_pipelines_path)
@@ -231,10 +230,8 @@ def getCloneRoot(owner: GirderModel, source_folder: GirderModel):
         )
         if source_folder is None:
             raise RestException(
-                (
-                    f"Referenced media source missing. Folder Id {next_id} was not found."
-                    " This may be a cloned dataset where the source was deleted."
-                ),
+                f"Referenced media source missing. Folder Id {next_id} was not found."
+                " This may be a cloned dataset where the source was deleted.",
                 code=404,
             )
         verify_dataset(source_folder)

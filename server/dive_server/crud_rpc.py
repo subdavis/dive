@@ -68,11 +68,9 @@ def load_pipelines(user: types.GirderUserModel) -> Dict[str, types.PipelineCateg
 def verify_pipe(user: types.GirderUserModel, pipeline: types.PipelineDescription):
     """Verify a pipeline exists and is runnable"""
     missing_exception = RestException(
-        (
-            f'No such pipeline exists for type={pipeline["type"]} pipe={pipeline["pipe"]}. '
-            'A pipeline upgrade may be outstanding or somethiung might have gone wrong. '
-            'If you think this is an error, contact the server operator.'
-        )
+        f'No such pipeline exists for type={pipeline["type"]} pipe={pipeline["pipe"]}. '
+        'A pipeline upgrade may be outstanding or somethiung might have gone wrong. '
+        'If you think this is an error, contact the server operator.'
     )
     all_pipelines = load_pipelines(user)
     try:
@@ -120,11 +118,9 @@ def run_pipeline(
     )
     if existing_jobs is not None:
         raise RestException(
-            (
-                f"A pipeline for {folder_id_str} is already running. "
-                "Only one outstanding job may be run at a time for "
-                "a dataset."
-            )
+            f"A pipeline for {folder_id_str} is already running. "
+            "Only one outstanding job may be run at a time for "
+            "a dataset."
         )
 
     token = Token().createToken(user=user, days=14)
@@ -277,7 +273,7 @@ def run_training(
             config=config,
             annotated_frames_only=annotatedFramesOnly,
             girder_client_token=str(token["_id"]),
-            girder_job_title=(f"Running training on {len(folder_list)} datasets"),
+            girder_job_title=f"Running training on {len(folder_list)} datasets",
             girder_job_type="private" if job_is_private else "training",
         ),
     )
@@ -338,10 +334,8 @@ def process_items(folder: types.GirderModel, user: types.GirderModel):
                 if not isinstance(track, dict):
                     Item().remove(item)  # remove the bad JSON from dataset
                     raise RestException(
-                        (
-                            'Invalid JSON file provided.'
-                            ' Please upload a COCO, KWCOCO, VIAME CSV, or DIVE JSON file.'
-                        )
+                        'Invalid JSON file provided.'
+                        ' Please upload a COCO, KWCOCO, VIAME CSV, or DIVE JSON file.'
                     )
                 crud.get_validated_model(models.Track, **track)
             item['meta'][constants.DetectionMarker] = str(folder['_id'])

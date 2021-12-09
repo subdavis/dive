@@ -25,10 +25,8 @@ def create_video(
             cv2.imwrite(directory + "/" + str(i).zfill(6) + ".jpg", img)
 
     process = sp.Popen(
-        (
-            f"ffmpeg -y -r {fps} -i {directory}/%06d.jpg -vcodec libx264"
-            f" -tune zerolatency -movflags +faststart {directory}/vid.mp4"
-        ),
+        f"ffmpeg -y -r {fps} -i {directory}/%06d.jpg -vcodec libx264"
+        f" -tune zerolatency -movflags +faststart {directory}/vid.mp4",
         stdout=sp.PIPE,
         shell=True,
         executable="/bin/bash",
