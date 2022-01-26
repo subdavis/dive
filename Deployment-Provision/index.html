@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://kitware.github.io/dive/Deployment-Provision/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.6">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.8">
     
     
       
@@ -23,7 +23,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.cd566b2a.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.6e60f8b8.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.e6a45f82.min.css">
@@ -1027,7 +1027,7 @@ terraform apply create.plan
 <tr>
 <td>run_server</td>
 <td><code>no</code></td>
-<td>Set <code>run_server=yes</code> for scenario 1 (Web Instance)</td>
+<td>Set <code>run_server=yes</code> for scenario 1 (Web Instance) (Fastest option)</td>
 </tr>
 <tr>
 <td>run_viame_cli</td>
@@ -1104,9 +1104,14 @@ ansible-playbook -i inventory ansible/playbook.yml --extra-vars <span class="s2"
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>This ansible playbook is runnable from any Ubuntu 18.04+ host to any Ubuntu 18.04+ target.  To run it locally, use the <code>inventory.local</code> file instead.  If you already have nvidia or docker installed, you can comment out these lines in the playbook.</p>
+<p><strong>If you run locally</strong> you'll need to restart the machine and run the playbook a second time.  The playbook will do this automatically for remote provisioning, but cannot restart if you're provisioning localhost.</p>
 <table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><code>ansible-playbook --ask-become-pass -i inventory ansible/playbook.yml --extra-vars <span class="s2">&quot;&lt;see above&gt;&quot;</span>
 </code></pre></div>
 </td></tr></table>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>You may need to run through the <a href="https://docs.docker.com/engine/install/linux-postinstall/">docker post-install guide</a> if you have permissions errors when trying to run <code>docker</code>. </p>
 </div>
 <h3 id="check-that-it-worked">Check that it worked</h3>
 <table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -1129,7 +1134,7 @@ ansible-playbook -i inventory ansible/playbook.yml --extra-vars <span class="s2"
 ssh -i ~/.ssh/gcloud_key viame@ip-address
 
 <span class="c1"># Test nvidia docker installation</span>
-docker run --gpus<span class="o">=</span>all --rm nvidia/cuda nvidia-smi
+docker run --gpus<span class="o">=</span>all --rm nvidia/cuda:11.0-base nvidia-smi
 
 <span class="c1"># Test regular nvidia runtime</span>
 nvidia-smi
@@ -1155,6 +1160,7 @@ sudo docker logs -f worker
 <ul>
 <li>Ansible provisioning is idempotent.  If it fails, run it again once or twice.</li>
 <li>You may need to change the global <code>GPUS_ALL_REGIONS</code> quota in <a href="https://stackoverflow.com/questions/53415180/gcp-error-quota-gpus-all-regions-exceeded-limit-0-0-globally">IAM -&gt; Quotas</a></li>
+<li>Nvidia drivers may not install correctly the first time.  <a href="https://phoenixnap.com/kb/install-nvidia-drivers-ubuntu">Try installing manually using <code>ubuntu-drivers</code></a></li>
 </ul>
 
               
@@ -1224,7 +1230,7 @@ sudo docker logs -f worker
     <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.22074ed6.min.js"}</script>
     
     
-      <script src="../assets/javascripts/bundle.1514a9a0.min.js"></script>
+      <script src="../assets/javascripts/bundle.960e086b.min.js"></script>
       
     
   </body>
