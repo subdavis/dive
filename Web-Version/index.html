@@ -1170,7 +1170,7 @@
 <p>Data can be downloaded from the FileBrowser by clicking the checkmark to the left of a dataset name.  This allows you to download the source images/video, the current detection file converted to <code>.csv</code> or everything including all backups of the detection files.</p>
 <ul>
 <li><mark>Image Sequence</mark> or <mark>Video</mark> will export the source media as a <code>.zip</code></li>
-<li><mark>Detections</mark> will export a VIAME <code>.csv</code> of annotations<ul>
+<li><mark>Detections</mark> will export a <a href="../DataFormats/#viame-csv">VIAME <code>.csv</code></a> of annotations<ul>
 <li>Checkbox options are explained in the <a href="../UI-Navigation-Editing-Bar/#navigation-bar">Navigation Bar Section</a>.</li>
 </ul>
 </li>
@@ -1234,6 +1234,10 @@
 <li>It has its own annotations, and can be run through pipelines and shared with others.</li>
 <li>It references the media (images or video) of another dataset.</li>
 </ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Be careful when deleting data that has been cloned.  Clones "point to" their source dataset for loading media, so if the source is deleted, all of its clones will fail to load.</p>
+</div>
 <h3 id="clone-use-cases">Clone use cases</h3>
 <ol>
 <li>When you want to use or modify data that doesn't belong to you, such as data from the shared training collection or from other users.</li>
